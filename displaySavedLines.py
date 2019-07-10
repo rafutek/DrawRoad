@@ -25,9 +25,9 @@ left_lines = np.vstack((left_lines, lines[lines[:,0] < 0]))
 right_lines = np.vstack((right_lines, lines[lines[:,0] > 0]))
 
 
-plt.title("Seperated Lines") 
+plt.title("Road Lines") 
 plt.xlabel("rho") 
 plt.ylabel("theta") 
 plt.plot(left_lines[:,0],left_lines[:,1], "ro") 
-plt.plot(right_lines[:,0],right_lines[:,1], "b^") 
+plt.plot(right_lines[:,0],right_lines[:,1], "bo") 
 plt.show()
