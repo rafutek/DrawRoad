@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 
 ############## variables definition ##############
+window_name = 'Line Detection'
 
 delay = 200
 
@@ -33,13 +34,21 @@ high_edge = 200
 
 hThreshold = 40
 
-window_name = 'Line Detection'
+min_rho_left_line = -300
+max_rho_left_line = -200
+min_theta_left_line = 2
+max_theta_left_line = 3
+
+min_rho_right_line = 50
+max_rho_right_line = 150
+min_theta_right_line = 0
+max_theta_right_line = 1.2
 
 
 ############## functions definition ##############
 
-def lineAnalysisAndDisplay(line, img):
-    rho, theta = line[0]
+
+def drawLine(rho, theta, img, color):
     a = np.cos(theta)
     b = np.sin(theta)
     x0 = a*rho
@@ -48,24 +57,54 @@ def lineAnalysisAndDisplay(line, img):
     y1 = int(y0 + 1000*(a))
     x2 = int(x0 - 1000*(-b))
     y2 = int(y0 - 1000*(a))
-    cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+    cv2.line(img,(x1,y1),(x2,y2),color,2)
+
+def lineAnalysis(rho, theta, img):
+    left_line = False
+    right_line = False 
+
+    if rho > min_rho_left_line and rho < max_rho_left_line and theta > min_theta_left_line and theta < max_theta_left_line:
+        left_line = True
+    elif rho > min_rho_right_line and rho < max_rho_right_line and theta > min_theta_right_line and theta < max_theta_right_line:
+        right_line = True
+    
+    return left_line, right_line
 
 
 
 # 'ESC' to return false, 'SPACE' to next frame, any other to next line
 def linesAnalysisAndDisplay(lines,window, img):
-        if lines is not None:
-            for line in lines:
-                lineAnalysisAndDisplay(line, img)
+    left_rho = left_theta = 0
+    right_rho = right_theta = 0
+    left_line_found = right_line_found = False
+
+    if lines is not None:
+        for line in lines:
+            rho, theta = line[0]
+            left_line, right_line = lineAnalysis(rho, theta, img)
+            
+            if left_line and not left_line_found:
+                left_line_found = True
+                left_rho = rho
+                left_theta = theta
+            elif right_line and not right_line_found:
+                right_line_found = True
+                right_rho = rho
+                right_theta = theta
+            
+            if left_line_found and right_line_found:
+                drawLine(left_rho, left_theta, img, (0,0,255))
+                drawLine(right_rho, right_theta, img, (255,0,0))
+                break
         
-        continueProgram = True
+    continueProgram = True
 
-        cv2.imshow(window, img)
-        c = cv2.waitKey(delay)
-        if c == 27:
-            continueProgram = False
+    cv2.imshow(window, img)
+    c = cv2.waitKey(delay)
+    if c == 27:
+        continueProgram = False
 
-        return continueProgram
+    return continueProgram
 
 
 
@@ -106,6 +145,7 @@ while(video.isOpened()):
     lines = cv2.HoughLines(edges, 1, np.pi / 180, hThreshold)
     # display lines and save lines user wants
     if not linesAnalysisAndDisplay(lines, window_name, img_road):
+        print("stop lines analysis")
         break
 
 video.release()
