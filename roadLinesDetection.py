@@ -45,6 +45,12 @@ min_theta_right_line = 0
 max_theta_right_line = 1.2
 
 
+size = 200, 100, 3
+img = np.zeros(size, dtype=np.uint8)
+line_length = 10
+last_x = img.shape[1]/2
+last_y = img.shape[0]
+
 ############## functions definition ##############
 
 
@@ -59,6 +65,14 @@ def drawLine(rho, theta, img, color):
     y2 = int(y0 - 1000*(a))
     cv2.line(img,(x1,y1),(x2,y2),color,2)
 
+def drawLineAngle(x1,y1, angle, length, img, color):
+
+    x2 =  int(round(x1 + length * np.cos(angle * np.pi / 180.0)))
+    y2 =  int(round(y1 + length * np.sin(angle * np.pi / 180.0)))
+    cv2.line(img,(int(x1),int(y1)),(x2,y2),color,2)
+    return x2, y2
+
+
 def lineAnalysis(rho, theta, img):
     left_line = False
     right_line = False 
@@ -71,9 +85,8 @@ def lineAnalysis(rho, theta, img):
     return left_line, right_line
 
 
-
 # 'ESC' to return false, 'SPACE' to next frame, any other to next line
-def linesAnalysisAndDisplay(lines,window, img):
+def linesLeftAndRight(lines,window, img):
     left_rho = left_theta = 0
     right_rho = right_theta = 0
     left_line_found = right_line_found = False
@@ -93,18 +106,9 @@ def linesAnalysisAndDisplay(lines,window, img):
                 right_theta = theta
             
             if left_line_found and right_line_found:
-                drawLine(left_rho, left_theta, img, (0,0,255))
-                drawLine(right_rho, right_theta, img, (255,0,0))
                 break
-        
-    continueProgram = True
 
-    cv2.imshow(window, img)
-    c = cv2.waitKey(delay)
-    if c == 27:
-        continueProgram = False
-
-    return continueProgram
+    return left_rho, left_theta, right_rho, right_theta
 
 
 
@@ -143,10 +147,22 @@ while(video.isOpened()):
 
     # then, detect the lines of the edges
     lines = cv2.HoughLines(edges, 1, np.pi / 180, hThreshold)
-    # display lines and save lines user wants
-    if not linesAnalysisAndDisplay(lines, window_name, img_road):
-        print("stop lines analysis")
+
+    # find left line and right line
+    left_rho, left_theta, right_rho, right_theta = linesLeftAndRight(lines, window_name, img_road)
+
+    #display
+    drawLine(left_rho, left_theta, img_road, (0,0,255))
+    drawLine(right_rho, right_theta, img_road, (255,0,0))
+    cv2.imshow(window_name, img)
+    if cv2.waitKey(delay) == 27:
         break
+
+
+    last_x, last_y = drawLineAngle(last_x, last_y, -90, line_length, img, (255,255,255))
+    cv2.imshow("test", img)
+    cv2.waitKey(100)
+    cv2.destroyWindow("test")
 
 video.release()
 cv2.destroyAllWindows()
