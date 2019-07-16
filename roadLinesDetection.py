@@ -78,21 +78,36 @@ def createArray(height, width, depth):
     size = height, width, depth
     return np.zeros(size, dtype=np.uint8)
 
-def newArrayWithDrawablePoint(x2,y2, img):
-    space_x = space_y = 0
+def newArray(x1, y1, x2, y2, img):
+    space = 0
+    new_array = img
 
     if x2 < 0:
-        space_x = abs(x2)
+        space = abs(x2)
+        space_array = createArray(img.shape[0], space, 1)
+        new_array = np.append(space_array, img, axis=1)           
+        x2 += space
+        x1 += space
+
     elif x2 > img.shape[1]:
-        space_x = x2 - img.shape[1]
+        space = x2 - img.shape[1]
+        space_array = createArray(img.shape[0], space, 1)
+        new_array = np.append(img, space_array, axis=1)
+
     
     if y2 < 0:
-        space_y = abs(y2)
+        space = abs(y2)
+        space_array = createArray(space, img.shape[1], 1)
+        new_array = np.append(space_array, img, axis=0)           
+        y2 += space
+        y1 += space
     elif y2 > img.shape[0]:
-        space_y = y2 - img.shape[0]
+        space = y2 - img.shape[0]
+        space_array = createArray(space, img.shape[1], 1)
+        new_array = np.append(img, space_array, axis=0)   
 
-         
-    return createArray(img.shape[0]+space_y, img.shape[1]+space_x, 1)
+    
+    return new_array, x1, y1, x2, y2
 
 
 def nextPointDrawable(x2,y2, img):
@@ -190,12 +205,12 @@ while(video.isOpened()):
     
     if not nextPointDrawable(x2,y2,img):
         # increase img size to draw the line
-        empty_img = newArrayWithDrawablePoint(x2,y2,img)
+        img, last_x, last_y, x2, y2  = newArray(last_x,last_y,x2,y2,img)
 
-        cv2.line(img,(last_x,last_y),(x2,y2),(255,255,255),2)
-        cv2.imshow("test", empty_img)
-        cv2.waitKey(100)
-        cv2.destroyWindow("test")
+    cv2.line(img,(last_x,last_y),(x2,y2),(255,255,255),2)
+    cv2.imshow("test", img)
+    cv2.waitKey(100)
+    cv2.destroyWindow("test")
     last_x = x2
     last_y = y2
     
