@@ -47,10 +47,13 @@ max_theta_right_line = 1.2
 
 size = 200, 100, 1
 img = np.zeros(size, dtype=np.uint8)
-line_length = 10
+line_length = 5
 last_x = int(img.shape[1]/2)
 last_y = int(img.shape[0])
 
+theta_straight_line = 1.39
+degree_straight_line = -90
+coef = degree_straight_line/theta_straight_line
 
 ############## functions definition ##############
 
@@ -152,7 +155,8 @@ def linesLeftAndRight(lines,window, img):
     return left_rho, left_theta, right_rho, right_theta
 
 
-
+def thetaToDegree(theta):
+    return coef * theta
 
 ############## main program ##############
 
@@ -192,21 +196,23 @@ while(video.isOpened()):
     # find left line and right line
     left_rho, left_theta, right_rho, right_theta = linesLeftAndRight(lines, window_name, img_road)
 
-    #draw and display
+    #draw
     if left_rho != 0 and left_theta != 0 and right_rho != 0 and right_theta != 0:
         drawLine(left_rho, left_theta, img_road, (0,0,255))
         drawLine(right_rho, right_theta, img_road, (255,0,0))
+        
+        theta_mean_line = left_theta - right_theta 
+        x2, y2 = nextLinePoint(last_x, last_y, thetaToDegree(theta_mean_line), line_length)
+        
+        if not nextPointDrawable(x2,y2,img):
+            # increase img to be able to draw the line completly
+            img, last_x, last_y, x2, y2  = newArray(last_x,last_y,x2,y2,img)
+
+
+    #display
     cv2.imshow(window_name, img_road)
     if cv2.waitKey(delay) == 27:
         break
-
-
-    x2, y2 = nextLinePoint(last_x, last_y, -90, line_length)
-    
-    if not nextPointDrawable(x2,y2,img):
-        # increase img size to draw the line
-        img, last_x, last_y, x2, y2  = newArray(last_x,last_y,x2,y2,img)
-
     cv2.line(img,(last_x,last_y),(x2,y2),(255,255,255),2)
     cv2.imshow("road", img)
     last_x = x2
