@@ -48,8 +48,9 @@ max_theta_right_line = 1.2
 size = 200, 100, 3
 img = np.zeros(size, dtype=np.uint8)
 line_length = 10
-last_x = img.shape[1]/2
-last_y = img.shape[0]
+last_x = int(img.shape[1]/2)
+last_y = int(img.shape[0])
+
 
 ############## functions definition ##############
 
@@ -65,12 +66,18 @@ def drawLine(rho, theta, img, color):
     y2 = int(y0 - 1000*(a))
     cv2.line(img,(x1,y1),(x2,y2),color,2)
 
-def drawLineAngle(x1,y1, angle, length, img, color):
 
+def nextLinePoint(x1,y1, angle, length):
     x2 =  int(round(x1 + length * np.cos(angle * np.pi / 180.0)))
     y2 =  int(round(y1 + length * np.sin(angle * np.pi / 180.0)))
-    cv2.line(img,(int(x1),int(y1)),(x2,y2),color,2)
     return x2, y2
+
+def createArray(height, width, depth):
+    size = height, width, depth
+    return np.zeros(size, dtype=np.uint8)
+
+def nextPointDrawable(x2,y2, img):
+    return x2 > 0 and x2 < img.shape[1] and y2 > 0 and y2 < img.shape[0]
 
 
 def lineAnalysis(rho, theta, img):
@@ -151,18 +158,26 @@ while(video.isOpened()):
     # find left line and right line
     left_rho, left_theta, right_rho, right_theta = linesLeftAndRight(lines, window_name, img_road)
 
-    #display
-    drawLine(left_rho, left_theta, img_road, (0,0,255))
-    drawLine(right_rho, right_theta, img_road, (255,0,0))
-    cv2.imshow(window_name, img)
+    #draw and display
+    if left_rho != 0 and left_theta != 0 and right_rho != 0 and right_theta != 0:
+        drawLine(left_rho, left_theta, img_road, (0,0,255))
+        drawLine(right_rho, right_theta, img_road, (255,0,0))
+    cv2.imshow(window_name, img_road)
     if cv2.waitKey(delay) == 27:
         break
 
 
-    last_x, last_y = drawLineAngle(last_x, last_y, -90, line_length, img, (255,255,255))
-    cv2.imshow("test", img)
-    cv2.waitKey(100)
-    cv2.destroyWindow("test")
+    x2, y2 = nextLinePoint(last_x, last_y, -80, line_length)
+    
+    if nextPointDrawable(x2,y2,img):
+        cv2.line(img,(last_x,last_y),(x2,y2),(255,255,255),2)
+        cv2.imshow("test", img)
+        cv2.waitKey(100)
+        cv2.destroyWindow("test")
+        last_x = x2
+        last_y = y2
+    
+
 
 video.release()
 cv2.destroyAllWindows()
