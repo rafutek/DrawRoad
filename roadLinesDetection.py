@@ -45,7 +45,7 @@ min_theta_right_line = 0
 max_theta_right_line = 1.2
 
 
-size = 200, 100, 3
+size = 200, 100, 1
 img = np.zeros(size, dtype=np.uint8)
 line_length = 10
 last_x = int(img.shape[1]/2)
@@ -67,6 +67,8 @@ def drawLine(rho, theta, img, color):
     cv2.line(img,(x1,y1),(x2,y2),color,2)
 
 
+#img = np.append(new_array, img, axis=1)
+
 def nextLinePoint(x1,y1, angle, length):
     x2 =  int(round(x1 + length * np.cos(angle * np.pi / 180.0)))
     y2 =  int(round(y1 + length * np.sin(angle * np.pi / 180.0)))
@@ -76,8 +78,25 @@ def createArray(height, width, depth):
     size = height, width, depth
     return np.zeros(size, dtype=np.uint8)
 
+def newArrayWithDrawablePoint(x2,y2, img):
+    space_x = space_y = 0
+
+    if x2 < 0:
+        space_x = abs(x2)
+    elif x2 > img.shape[1]:
+        space_x = x2 - img.shape[1]
+    
+    if y2 < 0:
+        space_y = abs(y2)
+    elif y2 > img.shape[0]:
+        space_y = y2 - img.shape[0]
+
+         
+    return createArray(img.shape[0]+space_y, img.shape[1]+space_x, 1)
+
+
 def nextPointDrawable(x2,y2, img):
-    return x2 > 0 and x2 < img.shape[1] and y2 > 0 and y2 < img.shape[0]
+    return x2 >= 0 and x2 < img.shape[1] and y2 >= 0 and y2 < img.shape[0]
 
 
 def lineAnalysis(rho, theta, img):
@@ -167,15 +186,18 @@ while(video.isOpened()):
         break
 
 
-    x2, y2 = nextLinePoint(last_x, last_y, -80, line_length)
+    x2, y2 = nextLinePoint(last_x, last_y, -90, line_length)
     
-    if nextPointDrawable(x2,y2,img):
+    if not nextPointDrawable(x2,y2,img):
+        # increase img size to draw the line
+        empty_img = newArrayWithDrawablePoint(x2,y2,img)
+
         cv2.line(img,(last_x,last_y),(x2,y2),(255,255,255),2)
-        cv2.imshow("test", img)
+        cv2.imshow("test", empty_img)
         cv2.waitKey(100)
         cv2.destroyWindow("test")
-        last_x = x2
-        last_y = y2
+    last_x = x2
+    last_y = y2
     
 
 
