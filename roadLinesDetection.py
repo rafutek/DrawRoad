@@ -208,9 +208,7 @@ while(video.isOpened()):
         img, last_x, last_y, x2, y2  = newArray(last_x,last_y,x2,y2,img)
 
     cv2.line(img,(last_x,last_y),(x2,y2),(255,255,255),2)
-    cv2.imshow("test", img)
-    cv2.waitKey(100)
-    cv2.destroyWindow("test")
+    cv2.imshow("road", img)
     last_x = x2
     last_y = y2
     
